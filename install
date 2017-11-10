@@ -1,4 +1,56 @@
 
-#!/bin/bash
+#!/bin/bash -e
 #
 #install script
+
+THISUSER=/home/$USER
+
+echo "
+--> downloading and installing node.js..."
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+sudo apt install -y nodejs
+
+echo "
+--> downloading and installing git..."
+sudo apt install -y git
+sudo apt install -y rpl
+sudo apt -y autoremove
+
+echo "
+--> setting git credentials..."
+sudo git config --global user.name "harflm13"
+sudo git config --global user.email "harflm13@htl-kaindorf.ac.at"
+
+echo "
+--> downloading..."
+cd $THISUSER && sudo mkdir git
+cd $THISUSER/git && sudo git clone https://github.com/harflm13/Homepage
+cd $THISUSER/git/Homepage && sudo git pull
+
+echo "
+--> copy rc.local..."
+sudo rsync -aP $THISUSER/git/Homepage/rc.local /etc/rc.local
+
+echo "
+--> editing rc.local..."
+sudo rpl USERR $THISUSER /etc/rc.local
+sudo chmod +x /etc/rc.local
+
+echo "
+--> installing node dependencies..."
+sudo npm i -g npm
+sudo npm i -g @angular/cli gulp npm-install-missing
+cd $THISUSER/git/Homepage/ng2 && sudo npm i --unsafe-perm
+cd $THISUSER/git/Homepage/server && sudo npm i
+
+echo "
+--> building server..."
+cd $THISUSER/git/Homepage/ng2 && sudo ng build
+cd $THISUSER/git/Homepage/server && sudo gulp cleanAndBuild
+
+echo "
+--> starting server..."
+cd $THISUSER/git/Homepage/server/dist && sudo node main.js &
+
+echo "
+done"
